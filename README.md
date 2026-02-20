@@ -48,6 +48,7 @@ Open the integrated terminal (`Terminal → New Terminal` or `` Ctrl+` ``) and r
 
 
 pip install requests matplotlib cartopy numpy scipy pillow netCDF4
+
 On some Windows systems, use:
 
 py -m pip install requests matplotlib cartopy numpy scipy pillow netCDF4
