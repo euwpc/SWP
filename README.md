@@ -32,7 +32,7 @@ Download from: https://code.visualstudio.com/
 
 In VS Code:  
 - Press `Ctrl+Shift+P` (or `Cmd+Shift+P` on macOS)  
-- Select **Git: Clone**  
+- Select **Git: Clone** if it doesn't show, write **Git:Clone** yourself
 - Enter the URL:  
   `https://github.com/euwpc/SWP.git`  
 - Choose a destination folder and confirm  
