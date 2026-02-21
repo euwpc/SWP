@@ -1,4 +1,4 @@
-# SWP – Swedish Weather Project
+# Swedish Weather Project
 
 Visualize meteorological data using high-quality maps generated from NetCDF files.  
 Built with Python, Matplotlib, Cartopy, NumPy, and SciPy.
@@ -24,45 +24,90 @@ Built with Python, Matplotlib, Cartopy, NumPy, and SciPy.
 
 ## Quick Start
 
-### 1. Install Visual Studio Code (recommended)
+### 1. Install Anaconda Prompt
 
-Download from: https://code.visualstudio.com/
+Download from: https://www.anaconda.com/download
 
-### 2. Clone the repository
+### 2. Open Anaconda Prompt
 
-In VS Code:  
-- Press `Ctrl+Shift+P` (or `Cmd+Shift+P` on macOS)  
-- Select **Git: Clone** if it doesn't show, write **Git: Clone** yourself. **YOU NEED TO SIGN IN WITH YOUR GITHUB ACCOUNT!**
-- Enter the URL:  
-  `https://github.com/euwpc/SWP.git`  
-- Choose a destination folder and confirm  
+Search in Windows for:
 
-### 3. Trust the folder authors
+Anaconda Prompt
 
-When prompted with “Do you trust the authors of the files in this folder?”  
-select **Yes, I trust the authors**
+Open it.
 
-### 4. Install required Python packages
+### 3. Create a Clean Environment
 
-Open the integrated terminal (`Terminal → New Terminal` or `` Ctrl+` ``) and run:
+Use Python 3.11 for best compatibility:
+
+`conda create -n sweden_env python=3.11`
+
+Press `y` to confirm.
+
+### 4. Activate the Environment
+
+`conda activate sweden_env`
+
+You should now see:
+
+`(sweden_env)`
+
+at the beginning of the line.
 
 
-pip install requests matplotlib cartopy numpy scipy pillow netCDF4
+### 5. Install Required Packages
+Install everything from conda-forge (precompiled, no build errors):
 
-On some Windows systems, use:
+`conda install -c conda-forge cartopy matplotlib numpy scipy shapely pillow requests netcdf4`
 
-py -m pip install requests matplotlib cartopy numpy scipy pillow netCDF4
+Wait until installation completes.
 
+Do not use pip for Cartopy.
 
-### 5. Run the program
-In the terminal, execute:
+### 6. Install Git (If Needed)
 
-python main.py
+Check if Git is installed:
 
-or on Windows (if needed):
+`git --version`
 
-py main.py
+If not recognized, download Git:
 
-The first run may take several minutes while map data is downloaded and cached.
-Output graphics will appear in the project folder.
+https://git-scm.com/download/win
 
+During installation choose:
+“Git from the command line and also from 3rd-party software”
+
+Restart Anaconda Prompt after installing.
+
+### 7. Clone the Repository
+
+Inside Anaconda Prompt:
+
+`git clone https://github.com/euwpc/SWP.git`
+`cd SWP`
+
+### 8. Run the Program
+
+To run the program, run: `python main.py`
+
+### Output 
+
+Generated PNG maps will appear inside the project folder.
+
+To open the folder quickly:
+
+`explorer .` 
+
+(You will need to stop auto-updating in order to open the folder (CTRL + C to stop auto-updating))
+
+### Running the Project Later
+
+Open Anaconda Prompt and run:
+
+`conda activate sweden_env`
+`cd C:\Users\YOURNAME\SWP`
+`python main.py`
+
+### Future updates
+
+I will continue working on this project, and once I'm done with an update, you need to run `git pull` in Anaconda Prompt to install the new update.
