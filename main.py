@@ -1,16 +1,3 @@
-"""
-
-Install once:
-    pip install requests matplotlib cartopy numpy scipy pillow shapely
-
-QML colour files (optional — built-in fallbacks if missing):
-    temperature_color_table_high.qml   wind_gust_color_table.qml
-    pressure_color_table.qml           precipitation_color_table.qml
-
-Run:
-    python sweden_weather_map.py
-"""
-
 import os, time, datetime, threading, warnings, concurrent.futures
 import requests, xml.etree.ElementTree as ET
 import numpy as np
@@ -137,7 +124,7 @@ _PARAMS = [
     ("pres", 9,  "latest-hour"),
     ("gust", 21, "latest-hour"),
     ("dewp", 39, "latest-hour"),
-    ("prec", 7,  "latest-months"),  
+    ("prec", 14, "latest-hour"),
 ]
 
 
@@ -174,6 +161,8 @@ def _fetch_one_json(key, param_id, period):
             v = float(raw)
         except (TypeError, ValueError):
             continue
+        if key == "prec" and v < 0:
+            continue
         result.append({
             "key":  int(s.get("key", 0)),
             "name": s.get("name", "?"),
@@ -188,10 +177,13 @@ def _fetch_one_json(key, param_id, period):
 
 
 def fetch(extent):
+    # Fetch all stations from SMHI regardless of region.
+    # A generous margin is kept so that interpolation is smooth right to the
+    # edges of any sub-region; render_one handles what actually gets drawn.
+    FETCH_MARGIN = 1.5
     lon0, lon1, lat0, lat1 = extent
-    margin = 0.5
 
-    raw = {}   
+    raw = {}
     with concurrent.futures.ThreadPoolExecutor(max_workers=8) as ex:
         futs = {
             ex.submit(_fetch_one_json, k, pid, per): k
@@ -201,7 +193,7 @@ def fetch(extent):
             k = futs[fut]
             raw[k] = fut.result()
 
-    station_pos = {}   
+    station_pos = {}
     for k, slist in raw.items():
         for s in slist:
             pos = (round(s["lat"], 4), round(s["lon"], 4))
@@ -220,8 +212,11 @@ def fetch(extent):
     stations = []
     for pos, info in station_pos.items():
         lat, lon = info["lat"], info["lon"]
-        if not (lon0 - margin <= lon <= lon1 + margin and
-                lat0 - margin <= lat <= lat1 + margin):
+        # Include stations within the region plus a margin for interpolation.
+        # Stations outside the visible extent will still inform the grid but
+        # won't have dots/labels drawn (that filter lives in render_one).
+        if not (lon0 - FETCH_MARGIN <= lon <= lon1 + FETCH_MARGIN and
+                lat0 - FETCH_MARGIN <= lat <= lat1 + FETCH_MARGIN):
             continue
         s = {"name": info["name"], "lat": lat, "lon": lon}
         for k in ("temp", "wind", "wdir", "gust", "hum", "prec", "pres", "dewp"):
@@ -258,7 +253,12 @@ def render_one(stations, key, cmap, norm, title, unit, fmt,
                time_str, gx, gy, outfile, wind_arrows=False):
     lon0, lon1, lat0, lat1 = EXTENT
     grid = interpolate(stations, key, gx, gy)
-    ok   = [s for s in stations if not np.isnan(s.get(key, np.nan))]
+
+    # Only show dots, labels and min/max for stations inside the visible extent.
+    ok = [s for s in stations
+          if not np.isnan(s.get(key, np.nan))
+          and lon0 - 0.1 <= s["lon"] <= lon1 + 0.1
+          and lat0 - 0.1 <= s["lat"] <= lat1 + 0.1]
 
     if ok:
         vmin_obs = min(s[key] for s in ok)
@@ -341,9 +341,6 @@ def render_one(stations, key, cmap, norm, title, unit, fmt,
     if wind_arrows:
         for s in ok:
             slon, slat = s["lon"], s["lat"]
-            if not (lon0 - 0.3 <= slon <= lon1 + 0.3 and
-                    lat0 - 0.3 <= slat <= lat1 + 0.3):
-                continue
             wd = s.get("wind_dir", np.nan)
             if np.isnan(wd) or s[key] < 0.5:
                 continue
@@ -359,9 +356,6 @@ def render_one(stations, key, cmap, norm, title, unit, fmt,
 
     for s in ok:
         slon, slat = s["lon"], s["lat"]
-        if not (lon0 - 0.1 <= slon <= lon1 + 0.1 and
-                lat0 - 0.1 <= slat <= lat1 + 0.1):
-            continue
         ax.plot(slon, slat, "o", color="#222222", ms=2.5, mec="none",
                 transform=ccrs.PlateCarree(), zorder=11)
         ax.text(slon + 0.06, slat + 0.04, fmt.format(s[key]),
@@ -482,7 +476,7 @@ if __name__ == "__main__":
             EXTENT, REGION_LABEL = REGION_MAP[choice]
             break
         else:
-            print("  Ange 1, 2, 3 eller 4.  /  Please enter 1, 2, 3 or 4.")
+            print("  Ange 1, 2, 3 eller 4.  /  Please enter 1, 2, 3 eller 4.")
 
     print()
     print(f"  Region: {REGION_LABEL}")
@@ -490,8 +484,7 @@ if __name__ == "__main__":
     print()
 
     print("  Laddar kartdata / Loading map data …")
-    print("Please note that the precipitation currently doesn't work.")
-    _get_sweden_geom()   
+    _get_sweden_geom()
 
     cmaps  = load_cmaps()
     gx, gy = make_grid(EXTENT)
